@@ -24,17 +24,17 @@ Produce items
 
     FOR    ${path}    IN    @{paths}
 
-        # Take only file extension
+        # Take only supported file extension
         ${fileext}=    Fetch From Right    ${path}    .
 
         IF     $fileext.lower() in $extensions
-            Log To Console    Working on file: ${path}
 
+            # Call Nanonets API for extraction.
             ${result}=    Predict File
             ...  ${path}
             ...  ${nanonets}[model]
 
-            Log To Console    ${result}[result][0][request_file_id]
+            Log    File id: ${result}[result][0][request_file_id]
 
             Create Output Work Item
             ...    variables=${result}

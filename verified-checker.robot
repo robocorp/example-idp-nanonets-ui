@@ -1,43 +1,51 @@
 *** Settings ***
 
 Library     RPA.Robocorp.WorkItems
-Library     RPA.Robocorp.Process
 Library     RPA.Notifier
-Library     RPA.DocumentAI.Nanonets
 Library     RPA.Robocorp.Vault
 
 *** Tasks ***
 Check verified documents
     [Documentation]
-    ...    Go through Nanonets extracted work items
-    ...    and decide which documents require a manual.
-    ...    review and git UI links for then. The rest
-    ...    will be just sent to Slack with a few datapoints.
+    ...    Check if the verification in Nanonets UI
+    ...    was completed, and if yes sends a couple
+    ...    of details of the invoice to Slack.
     For Each Input Work Item    Check and handle item
 
 *** Keywords ***
 Check and handle item
     ${payload}=    Get Work Item Payload
 
-    ${slack_secret}=    Get Secret    Slack
-    ${nanonets}=    Get Secret    Nanonets
+    TRY
+        # Only handle work items that has is_moderated = true
+        IF    ${payload}[is_moderated]
 
-    ${message}=   Catenate    Nanonets: manual verification complete for invoice (
-    ${message}=   Catenate    SEPARATOR=    ${message}    ${payload}[request_file_id]    ):
+            # Connect with Robocorp Vault
+            ${slack_secret}=    Get Secret    Slack
 
-    FOR    ${field}    IN    @{payload}[moderated_boxes]
-        IF    $field["status"] == "moderated"
-            IF    "${field}[label]" == "seller_name" or "${field}[label]" == "invoice_amount"
-                ${message}=   Catenate    ${message}    ${field}[ocr_text]
+            # Create the base of the Slack message
+            ${message}=   Catenate    Nanonets: manual verification complete for invoice (
+            ${message}=   Catenate    SEPARATOR=    ${message}    ${payload}[request_file_id]    ):
+
+            # Get the needed field values from verified invoice data (moderated_boxes element)
+            FOR    ${field}    IN    @{payload}[moderated_boxes]
+                IF    $field["status"] == "moderated"
+                    IF    "${field}[label]" == "seller_name" or "${field}[label]" == "invoice_amount"
+                        ${message}=   Catenate    ${message}    ${field}[ocr_text]
+                    END
+                END
             END
-        END
-    END
 
-    IF    ${payload}[moderated_boxes]
-        Notify Slack
-        ...    message=${message}
-        ...    channel=${slack_secret}[channel]
-        ...    webhook_url=${slack_secret}[webhook]
+            # Send the message to Slack.
+            Notify Slack
+            ...    message=${message}
+            ...    channel=${slack_secret}[channel]
+            ...    webhook_url=${slack_secret}[webhook]
+        ELSE
+            Log   Verification not complete in the UI, skipping the work item.
+        END
+    EXCEPT
+        Log To Console    Something wrong with the work item
     END
 
     Release Input Work Item    DONE

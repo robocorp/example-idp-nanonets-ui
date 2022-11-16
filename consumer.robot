@@ -8,17 +8,17 @@ Library     RPA.DocumentAI.Nanonets
 Library     RPA.HTTP
 
 *** Variables ***
-${THRESHOLD}            0.6
-${VALIDATION_URL_BASE}    https://preview.nanonets.com/Inferences/Model/858e4b37-6679-4552-9481-d5497dfc0b4a/ValidationUrl/
-${VALIDATION_URL_PARAMS1}    ?redirect=slack%3A%2F%2Fopen&expires=
-${VALIDATION_URL_PARAMS2}    &callback=https%3A%2F%2Fapi.eu1.robocorp.com%2Fprocess-v1%2Fworkspaces%2Fd6b65aa4-0c45-4fd7-8bec-d68a29896e78%2Fprocesses%2F7cf3c8cd-3f17-40f1-9397-db2495c01e2d%2Fruns-qs-authorization%3Ftoken%3D
+${THRESHOLD}                0.6
+${VALIDATION_URL_BASE}      https://preview.nanonets.com/Inferences/Model/858e4b37-6679-4552-9481-d5497dfc0b4a/ValidationUrl/
+${VALIDATION_URL_PARAMS1}   ?redirect=slack%3A%2F%2Fopen&expires=
+${VALIDATION_URL_PARAMS2}   &callback=https%3A%2F%2Fapi.eu1.robocorp.com%2Fprocess-v1%2Fworkspaces%2Fd6b65aa4-0c45-4fd7-8bec-d68a29896e78%2Fprocesses%2F7cf3c8cd-3f17-40f1-9397-db2495c01e2d%2Fruns-qs-authorization%3Ftoken%3D
 
 *** Tasks ***
 Consume items
     [Documentation]
     ...    Go through Nanonets extracted work items
     ...    and decide which documents require a manual.
-    ...    review and git UI links for then. The rest
+    ...    review and get UI links for then. The rest
     ...    will be just sent to Slack with a few datapoints.
     For Each Input Work Item    Handle item
 
@@ -49,7 +49,7 @@ Action for item
 
     # If validation is needed, get UI link from Nanonets API
     IF    ${validation_needed} == 1
-        Log To Console    Manual validation needed for invoice ${payload}[result][0][request_file_id]
+        Log    Manual validation needed for invoice ${payload}[result][0][request_file_id]
 
         # Get current date and increment with one hour (in seconds) to set link expiration
         ${date} =	Get Current Date	result_format=epoch
@@ -59,8 +59,6 @@ Action for item
         ${full_url}=   Catenate    SEPARATOR=    ${VALIDATION_URL_BASE}   ${payload}[result][0][request_file_id]   ${VALIDATION_URL_PARAMS1}    ${date}    ${VALIDATION_URL_PARAMS2}    ${controlroom}[apikey]
 
         ${creds}=  Evaluate  ("${nanonets}[username]", "")
-
-        Log To Console    ${full_url}
 
         ${response}=    GET
         ...    url=${full_url}
@@ -73,14 +71,14 @@ Action for item
         ${message}=    Catenate    ${message}    ${response.text}
 
     ELSE
-        Log To Console    No validation needed for invoice ${payload}[result][0][request_file_id]
+        Log    No validation needed for invoice ${payload}[result][0][request_file_id]
 
         ${message}=   Catenate    Nanonets: extraction successfull for invoice (
         ${message}=   Catenate    SEPARATOR=    ${message}    ${payload}[result][0][request_file_id]    ):
 
         ${fields}=    Get Fields From Prediction Result    ${payload}
         FOR    ${field}    IN    @{fields}
-            Log To Console    Label:${field}[label] Text:${field}[ocr_text]
+            # Log To Console    Label:${field}[label] Text:${field}[ocr_text]
             IF    $field["label"] == "seller_name" or $field["label"] == "invoice_amount"
                 ${message}=   Catenate    ${message}    ${field}[ocr_text]
             END
