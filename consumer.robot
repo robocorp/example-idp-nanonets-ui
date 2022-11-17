@@ -8,7 +8,9 @@ Library     RPA.DocumentAI.Nanonets
 Library     RPA.HTTP
 
 *** Variables ***
+# Each extracted datapoint needs to be over this defined confidence
 ${THRESHOLD}                0.6
+# Below are the parts used to construct the call to Nanonets API that get you a link to doc specific validation UI
 ${VALIDATION_URL_BASE}      https://preview.nanonets.com/Inferences/Model/858e4b37-6679-4552-9481-d5497dfc0b4a/ValidationUrl/
 ${VALIDATION_URL_PARAMS1}   ?redirect=slack%3A%2F%2Fopen&expires=
 ${VALIDATION_URL_PARAMS2}   &callback=https%3A%2F%2Fapi.eu1.robocorp.com%2Fprocess-v1%2Fworkspaces%2Fd6b65aa4-0c45-4fd7-8bec-d68a29896e78%2Fprocesses%2F7cf3c8cd-3f17-40f1-9397-db2495c01e2d%2Fruns-qs-authorization%3Ftoken%3D
@@ -30,8 +32,8 @@ Action for item
     [Arguments]    ${payload}
 
     #
-    # THE FOLLOWING BLOCK SIMULATES DOCUMENT TRIAGE BASED ON THE CONFIDENCE RESULT,
-    # AND IT'S TYPE. THIS PART WOULD BE REPLACED WITH REAL BUSINESS LOGIC.
+    # THE FOLLOWING BLOCK SIMULATES DOCUMENT TRIAGE BASED ON THE CONFIDENCE RESULT
+    # OF EACH EXTRACTED FIELD. THIS PART WOULD BE REPLACED WITH REAL BUSINESS LOGIC.
     #
 
     ${validation_needed}=   Set Variable      0
@@ -60,22 +62,26 @@ Action for item
 
         ${creds}=  Evaluate  ("${nanonets}[username]", "")
 
+        # Send request to Nanonets API to get the verification UI link
         ${response}=    GET
         ...    url=${full_url}
         ...    auth=${creds}
         Request Should Be Successful
         Status Should Be    200
 
+        # Construct a message to be sent to user.
         ${message}=    Catenate    Nanonets: manual validation needed for invoice (
         ${message}=    Catenate    SEPARATOR=    ${message}    ${payload}[result][0][request_file_id]    ):
         ${message}=    Catenate    ${message}    ${response.text}
 
     ELSE
+        # In this branch, user is just alerted that an invoice was processed, but no validation needed.
         Log    No validation needed for invoice ${payload}[result][0][request_file_id]
 
         ${message}=   Catenate    Nanonets: extraction successfull for invoice (
         ${message}=   Catenate    SEPARATOR=    ${message}    ${payload}[result][0][request_file_id]    ):
 
+        # Browse through the extracted fields to get the Seller Name and Invoice Amount.
         ${fields}=    Get Fields From Prediction Result    ${payload}
         FOR    ${field}    IN    @{fields}
             # Log To Console    Label:${field}[label] Text:${field}[ocr_text]
@@ -86,6 +92,7 @@ Action for item
 
     END
 
+    # Send message to Slack
     Notify Slack
     ...    message=${message}
     ...    channel=${slack_secret}[channel]
