@@ -48,14 +48,25 @@ Then add new email trigger under Schedules & Triggers tab, and make sure to have
 
 Next, set up another process that will be responsible for receiving the callbacks from the Nanonets manual verification UI. Follow the screen graps to get going.
 
-# TODO BELOW THIS
+Add a process with a single step, which is the PostVerify from the sample code.
 
-Now, running the process is easy. Just send an email with some attachemts to the email address shown in the Control Room, and wait for the results. Easiest way to view the full response of Base64.ai API is to look for Work Data for each run of the Consumer task through Control Room. See the details in the screenshot below.
+![image](https://user-images.githubusercontent.com/40179958/202699118-102cab18-d632-4c23-bd26-0fb5f26cda25.png)
 
-![image](https://user-images.githubusercontent.com/40179958/184807403-4b5dc10c-4a67-40d6-a312-f74516d7803e.png)
+Under API, add a new API key and give it any name. It needs to have at minimum the Trigger Process Run enabled. Remember to copy your key to the clipboard after creating it.
+
+![image](https://user-images.githubusercontent.com/40179958/202699306-f9c09194-9b6a-4c44-a09e-a8ba15f96142.png)
+
+Add a Vault entry called `Robocorp` and one key called `apikey`. Past the key from your clipboard in the value field.
+
+![image](https://user-images.githubusercontent.com/40179958/202699700-8ffcfb2e-8b69-41c9-8b9c-07a2f3ce7742.png)
+
+--
+
+Now, running the process is easy. Just send an email with some invoices as attachmets to the email address shown in the Control Room, and wait for the results in your chosen Slack channel! The example is set up with extremely low threshold, so by default practically everything will require a manual review. Once the Slack message arrives for review, open the UI and once the complete review is done, the process continues on the Robocorp side.
+
+![image](https://user-images.githubusercontent.com/40179958/202706038-47555201-ba4e-49b0-9ff8-9d0a2c3e55a9.png)
 
 ## Recommended further reading
 
-- The [Producer-consumer](https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem) model is not limited to two steps.
 - [Using work items](https://robocorp.com/docs/development-guide/control-room/work-items)
 - [Work item exception handling](https://robocorp.com/docs/development-guide/control-room/work-items#work-item-exception-handling)
