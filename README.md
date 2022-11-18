@@ -34,15 +34,21 @@ The reference architecture splits tasks to separate steps allowing the hyperscal
 
 ## Running the robot
 
+### Part 1: extracting data from incoming invoices
+
 While it's possible to run the robot in your development environment with the provided example data, it's meant to be used with email as a trigger. Once you have uploaded the robot code to the Control Room, configure a new process with two steps (Producer and Consumer) following the example of the picture. Notice that you might have given a different name for the robot when uploading it to the Control Room.
 
 <img width="555" alt="Screenshot 2022-11-17 at 13 51 08" src="https://user-images.githubusercontent.com/40179958/202439126-d541b6cb-6541-4f44-962e-b210d8032801.png">
 
 Then add new email trigger under Schedules & Triggers tab, and make sure to have both Parse email and Trigger process checkboxes selected. You should have things set up like in the screenshot below.
 
-# TODO BELOW THIS
+<img width="570" alt="Screenshot_18_11_2022__8_24" src="https://user-images.githubusercontent.com/40179958/202635476-5fd7489f-73c9-4584-ab53-2a07b2331884.png">
 
-![image](https://user-images.githubusercontent.com/40179958/184806318-f0ad25de-932d-47bc-9022-8fd68e18c0e2.png)
+### Part 2: Processing callbacks from Nanonets manual verification UI
+
+Next, set up another process that will be responsible for receiving the callbacks from the Nanonets manual verification UI. Follow the screen graps to get going.
+
+# TODO BELOW THIS
 
 Now, running the process is easy. Just send an email with some attachemts to the email address shown in the Control Room, and wait for the results. Easiest way to view the full response of Base64.ai API is to look for Work Data for each run of the Consumer task through Control Room. See the details in the screenshot below.
 
